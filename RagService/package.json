@@ -16,5 +16,8 @@
   "jsdom": "^21.1.1",
   "node-fetch": "^3.3.1",
   "dotenv": "^16.3.1"
+  ,
+  "langchain": "^0.0.271",
+  "chromadb": "^0.4.8"
   }
 }
