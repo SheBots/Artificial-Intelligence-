@@ -4,9 +4,18 @@ import os, json
 from dotenv import load_dotenv
 load_dotenv()
 
-from src.rag.ingest import ingest
-from src.rag.store import FaissStore
-from src.rag.embeddings import get_embedding_model, embed_texts
+import sys
+from pathlib import Path
+
+# When executing this file directly (python src/rag/rag_main.py), ensure the
+# package root (RagService/src) is on sys.path so package imports work.
+pkg_root = Path(__file__).resolve().parents[1]
+if str(pkg_root) not in sys.path:
+    sys.path.insert(0, str(pkg_root))
+
+from rag.ingest import ingest
+from rag.store import FaissStore
+from rag.embeddings import get_embedding_model, embed_texts
 
 app = FastAPI(title='SheBots RAG')
 
@@ -56,3 +65,14 @@ def rag_retrieve(q: str, k: int = TOP_K):
     res = rag_search(q, k)
     items = [{'url': r['url'], 'title': r.get('title',''), 'text': r.get('text',''), 'score': r.get('score',0)} for r in res['results']]
     return {'query': q, 'results': items}
+
+
+if __name__ == '__main__':
+    # Allow running the module directly: python RagService\rag_main.py
+    # This will start uvicorn programmatically on port 8001 (change via env var PORT)
+    import uvicorn
+    port = int(os.getenv('PORT', '8001'))
+    host = os.getenv('HOST', '127.0.0.1')
+    print(f"Starting SheBots RAG on http://{host}:{port} (CTRL+C to stop)")
+    # Pass the app object directly to avoid uvicorn trying to import the module
+    uvicorn.run(app, host=host, port=port, reload=False)

@@ -1,3 +1,12 @@
+# Ensure huggingface_hub provides cached_download (older sentence-transformers expects it)
+try:
+    import huggingface_hub as _hf
+    if not hasattr(_hf, 'cached_download') and hasattr(_hf, 'hf_hub_download'):
+        setattr(_hf, 'cached_download', getattr(_hf, 'hf_hub_download'))
+except Exception:
+    # ignore if huggingface_hub isn't importable yet; sentence-transformers will show an error later
+    _hf = None
+
 from sentence_transformers import SentenceTransformer
 import os
 

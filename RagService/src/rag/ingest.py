@@ -1,9 +1,9 @@
 import os, time, json
-from .loader import crawl
-from .clean import clean_text
-from .splitter import split_text
-from .embeddings import embed_texts
-from .store import FaissStore, Doc
+from rag.loader import crawl
+from rag.clean import clean_text
+from rag.splitter import split_text
+from rag.embeddings import embed_texts
+from rag.store import FaissStore, Doc
 
 def ingest(start_urls, allowlist, index_path, docstore_path, embedding_model, max_pages=300, max_depth=2, delay_ms=1500):
     pages = crawl(start_urls, allowlist, max_pages=max_pages, max_depth=max_depth, delay_ms=delay_ms)
