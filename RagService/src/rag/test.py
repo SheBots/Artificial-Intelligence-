@@ -13,8 +13,8 @@ from rag.store import FaissStore
 from rag.embeddings import get_embedding_model
 
 # Hardcoded test parameters (run with: python test.py)
-DEFAULT_URL = "https://cse.knu.ac.kr/sub3_2_a.php"
-DEFAULT_QUERY = "2021학번 총 이수학점?"
+DEFAULT_URL = "https://cse.knu.ac.kr/index.php"
+DEFAULT_QUERY = "현장실습"
 DEFAULT_MAX_PAGES = 2
 DEFAULT_MAX_DEPTH = 0
 DEFAULT_K = 3

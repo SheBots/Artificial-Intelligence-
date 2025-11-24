@@ -46,16 +46,37 @@ def fetch_page(url, timeout=15.0):
 
 
 def extract_text_and_title(html, base_url, url):
+    """Attempt to extract fuller page content, not only paragraphs.
+
+    Strategy:
+    1. Remove script/style/noscript.
+    2. Prefer <main>, <article> blocks if present; otherwise use body.
+    3. Assemble text from block-level elements (p, h1-h6, li, td, th, pre, code).
+    4. Fallback to full visible text if structured extraction too small.
+    """
     soup = BeautifulSoup(html, 'lxml')
     title = (soup.title.string.strip() if soup.title and soup.title.string else '')
-    # naive main text extraction: join paragraphs
-    paragraphs = soup.find_all('p')
-    text = '\n\n'.join([p.get_text(separator=' ', strip=True) for p in paragraphs])
+
+    for tag in soup(['script', 'style', 'noscript']):
+        tag.decompose()
+
+    container = soup.find('main') or soup.find('article') or soup.body or soup
+    parts = []
+    selectors = ['h1','h2','h3','h4','h5','h6','p','li','td','th','pre','code']
+    for sel in selectors:
+        for el in container.find_all(sel):
+            txt = el.get_text(separator=' ', strip=True)
+            if txt:
+                parts.append(txt)
+
+    text = '\n\n'.join(parts)
     if len(text) < 400:
-        # try fallback: get text from main
-        main = soup.find('main')
-        if main:
-            text = main.get_text(separator=' ', strip=True)
+        # fallback: everything visible (may include nav/footer but ensures coverage)
+        text = soup.get_text(separator=' ', strip=True)
+
+    # normalize excessive whitespace
+    import re
+    text = re.sub(r'\s+', ' ', text).strip()
     return title, text
 
 
