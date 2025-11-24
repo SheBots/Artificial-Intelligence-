@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 import os, json
 from dotenv import load_dotenv
@@ -6,7 +6,7 @@ load_dotenv()
 
 import sys
 from pathlib import Path
-
+import logging
 # When executing this file directly (python src/rag/rag_main.py), ensure the
 # package root (RagService/src) is on sys.path so package imports work.
 pkg_root = Path(__file__).resolve().parents[1]
@@ -25,6 +25,25 @@ START_URLS = os.getenv('START_URLS','https://computer.knu.ac.kr/eng/;https://com
 ALLOWLIST = os.getenv('ALLOWLIST','https://computer.knu.ac.kr/').split(';')
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL','sentence-transformers/all-MiniLM-L6-v2')
 TOP_K = int(os.getenv('TOP_K','5'))
+
+# Logging / debug toggle
+LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO').upper()
+logging.basicConfig(level=LOG_LEVEL, format='[%(asctime)s] %(levelname)s %(name)s - %(message)s')
+logger = logging.getLogger('SheBotsRAG')
+RAG_DEBUG = os.getenv('RAG_DEBUG', '0').lower() in ('1','true','yes','on')
+
+def _log_retrieval(query: str, results: list, k: int):
+    try:
+        logger.info(f"[RAG] query: {query} (k={k}, hits={len(results)})")
+        for i, r in enumerate(results[:k], start=1):
+            score = r.get('score', 0)
+            title = (r.get('title','') or '')[:120]
+            url = r.get('url','')
+            text = (r.get('text','') or '').replace('\n',' ')[:500]
+            logger.info(f"[RAG] {i}: score={score} url={url} title={title}")
+            logger.debug(f"[RAG] {i} text: {text}")
+    except Exception:
+        logger.exception("Failed to log RAG results")
 
 class IngestRequest(BaseModel):
     full: bool | None = False
@@ -48,7 +67,11 @@ def rag_ingest(req: IngestRequest):
 
 
 @app.get('/rag/search')
-def rag_search(q: str, k: int = TOP_K):
+def rag_search(
+    q: str = Query(..., alias='query'),
+    k: int = TOP_K,
+    debug: bool = False
+):
     if not q:
         raise HTTPException(status_code=400, detail='q is required')
     model = get_embedding_model()
@@ -56,13 +79,15 @@ def rag_search(q: str, k: int = TOP_K):
     store = FaissStore(len(emb), INDEX_PATH, DOCSTORE_PATH)
     store.load_or_create()
     results = store.search(emb, k=k)
+    if RAG_DEBUG or debug:
+        _log_retrieval(q, results, k)
     return {'query': q, 'results': results}
 
 
 @app.get('/rag/retrieve')
-def rag_retrieve(q: str, k: int = TOP_K):
+def rag_retrieve(q: str, k: int = TOP_K, debug: bool = False):
     # same as search but minimal fields
-    res = rag_search(q, k)
+    res = rag_search(q, k, debug)
     items = [{'url': r['url'], 'title': r.get('title',''), 'text': r.get('text',''), 'score': r.get('score',0)} for r in res['results']]
     return {'query': q, 'results': items}
 
