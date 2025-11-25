@@ -1,0 +1,1 @@
+python RagService\src\rag\rag_main.py

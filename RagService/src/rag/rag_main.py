@@ -21,8 +21,8 @@ from rag.embeddings import get_embedding_model
 app = FastAPI(title='SheBots Hybrid RAG')
 
 # ----------------------------- ENV -----------------------------
-INDEX_PATH = os.getenv('INDEX_PATH', './data/faiss_index')
-DOCSTORE_PATH = os.getenv('DOCSTORE_PATH', './data/docstore.jsonl')
+INDEX_PATH = os.getenv('INDEX_PATH', '.data/test/faiss_index')
+DOCSTORE_PATH = os.getenv('DOCSTORE_PATH', '.data/test/docstore.jsonl')
 START_URLS = os.getenv('START_URLS', 'https://computer.knu.ac.kr/eng/').split(';')
 ALLOWLIST = os.getenv('ALLOWLIST', 'https://computer.knu.ac.kr/').split(';')
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL', 'sentence-transformers/all-MiniLM-L6-v2')

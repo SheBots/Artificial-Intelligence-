@@ -9,3 +9,5 @@ __pycache__/
 RagService\src\rag\__pycache__/
 
 data/
+
+.venv/
