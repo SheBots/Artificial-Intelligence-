@@ -11,3 +11,6 @@ RagService\src\rag\__pycache__/
 data/
 
 .venv/
+
+manual_data/
+RagService/src/rag/data.py
