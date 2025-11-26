@@ -9,20 +9,20 @@ import json
 import logging
 import requests
 
-from src.loader import (
+from .loader import (
     crawl,
     extract_pdf,
     extract_docx,
     extract_hwp,
     extract_image_ocr,
 )
-from src.clean import clean_html_strict, clean_text
-from src.splitter import split_text
-from src.embeddings import embed_texts
-from src.store import FaissStore, Doc
+from .clean import clean_html_strict, clean_text
+from .splitter import split_text
+from .embeddings import embed_texts
+from .store import FaissStore, Doc
 
 # Manual ingestion lists
-from src.data import MANUAL_URLS, PDF_FILES, DOCX_FILES, TEXT_FILES
+from .data import MANUAL_URLS, PDF_FILES, DOCX_FILES, TEXT_FILES
 
 logger = logging.getLogger(__name__)
 

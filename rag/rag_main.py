@@ -5,7 +5,6 @@
 # - Score fusion + reranking
 # - Adaptive chunk limit
 # - Works for ANY question or dataset
-
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 import os
@@ -15,23 +14,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-import sys
-from pathlib import Path
 import logging
 
-pkg_root = Path(__file__).resolve().parents[1]
-if str(pkg_root) not in sys.path:
-    sys.path.insert(0, str(pkg_root))
-
-from ingest import ingest
-from store import FaissStore
-from embeddings import get_embedding_model
+# Remove manual sys.path manipulation and import via package
+from .ingest import ingest
+from .store import FaissStore
+from .embeddings import get_embedding_model
 
 app = FastAPI(title="Universal Hybrid RAG")
 
 # ----------------------------- ENV -----------------------------
-INDEX_PATH = os.getenv("INDEX_PATH", ".data/test/faiss_index")
-DOCSTORE_PATH = os.getenv("DOCSTORE_PATH", ".data/test/docstore.jsonl")
+# Fix default paths to ./data instead of .data
+INDEX_PATH = os.getenv("INDEX_PATH", "./data/test/faiss_index")
+DOCSTORE_PATH = os.getenv("DOCSTORE_PATH", "./data/test/docstore.jsonl")
 START_URLS = os.getenv("START_URLS", "").split(";")
 ALLOWLIST = os.getenv("ALLOWLIST", "").split(";")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
