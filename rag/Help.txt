@@ -1,6 +1,7 @@
 ---- Start the server ------------
 To start the RAG service server, run the following command in your terminal:
-python RagService\src\rag\rag_main.py
+cd RagService\src
+uvicorn rag.rag_main:app --host 127.0.0.1 --port 8001 --reload
 
 
 ------- Checks for the server ------------

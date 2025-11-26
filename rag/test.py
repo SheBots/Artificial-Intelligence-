@@ -10,9 +10,9 @@ pkg_root = Path(__file__).resolve().parents[1]
 if str(pkg_root) not in sys.path:
     sys.path.insert(0, str(pkg_root))
 
-from rag.ingest import ingest
-from rag.store import FaissStore
-from rag.embeddings import get_embedding_model
+from src.ingest import ingest
+from src.store import FaissStore
+from src.embeddings import get_embedding_model
 
 DEFAULT_URL = "https://cse.knu.ac.kr/index.php"
 DEFAULT_QUERY = "현장실습"
