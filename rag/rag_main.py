@@ -23,9 +23,9 @@ pkg_root = Path(__file__).resolve().parents[1]
 if str(pkg_root) not in sys.path:
     sys.path.insert(0, str(pkg_root))
 
-from src.ingest import ingest
-from src.store import FaissStore
-from src.embeddings import get_embedding_model
+from ingest import ingest
+from store import FaissStore
+from embeddings import get_embedding_model
 
 app = FastAPI(title="Universal Hybrid RAG")
 
