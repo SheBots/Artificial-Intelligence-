@@ -3,7 +3,12 @@ uvicorn[standard]==0.22.0
 python-dotenv==1.0.0
 httpx==0.24.1
 beautifulsoup4==4.12.2
+
+# --- Embedding dependencies ---
 sentence-transformers==2.2.2
+transformers>=4.35.0
+huggingface-hub>=0.20.3
+
 faiss-cpu==1.12.0
 lxml==4.9.3
 PyPDF2==3.0.1
