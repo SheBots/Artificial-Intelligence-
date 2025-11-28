@@ -1,14 +1,15 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.9.0+cpu
+
 fastapi==0.95.2
 uvicorn[standard]==0.22.0
 python-dotenv==1.0.0
 httpx==0.24.1
 beautifulsoup4==4.12.2
 
-# --- Embedding dependencies (compatible versions) ---
 sentence-transformers==2.7.0
 transformers==4.41.2
 huggingface-hub==0.23.4
-torch==2.3.1
 tokenizers==0.19.1
 numpy<2.0.0
 
