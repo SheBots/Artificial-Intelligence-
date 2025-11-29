@@ -12,8 +12,21 @@ MANUAL_URLS = [
     "https://cse.knu.ac.kr/sub3_2_b.php",
     "https://cse.knu.ac.kr/sub3_4_a.php",
     "https://cse.knu.ac.kr/sub3_4_a.php",
-    "https://cse.knu.ac.kr/bbs/board.php?bo_table=sub5_1&wr_id=25900&sca=%EA%B8%80%EC%86%9D",
-    "https://cse.knu.ac.kr/bbs/board.php?bo_table=sub5_1&wr_id=28118&sfl=wr_subject&stx=%ED%98%84%EC%9E%A5%EC%8B%A4%EC%8A%B5&sop=and",
+    "https://cse.knu.ac.kr/eng/eng3_4_a.php",
+    "https://cse.knu.ac.kr/eng/eng3_4_b.php",
+    "https://cse.knu.ac.kr/eng/eng3_2_b.php",
+    "https://cse.knu.ac.kr/eng/eng3_1_a.php",
+    "https://cse.knu.ac.kr/eng/eng3_5_a.php",
+    "https://cse.knu.ac.kr/bbs/board.php?bo_table=eng5_1&sca=Glassop&wr_id=25900",
+    "https://cse.knu.ac.kr/bbs/board.php?bo_table=sub5_1&sca=%EA%B8%80%EC%86%9D&wr_id=28525",
+    "https://cse.knu.ac.kr/bbs/board.php?bo_table=sub5_1&sca=%EA%B8%80%EC%86%9D&wr_id=28741",
+    "https://cse.knu.ac.kr/bbs/board.php?bo_table=sub5_1&wr_id=28740",
+    "https://cse.knu.ac.kr/bbs/board.php?bo_table=sub5_1&wr_id=25857",
+    "https://cse.knu.ac.kr/bbs/board.php?bo_table=eng5_1&wr_id=25752",
+    "https://cse.knu.ac.kr/bbs/board.php?bo_table=eng5_1&wr_id=25898",
+    "https://cse.knu.ac.kr/bbs/board.php?bo_table=sub5_1&sca=%EC%8B%AC%EC%BB%B4&wr_id=27614",
+    "https://cse.knu.ac.kr/bbs/board.php?bo_table=sub5_1&wr_id=25857",
+    "https://cse.knu.ac.kr/bbs/board.php?bo_table=eng5_1&wr_id=25940",
 ]
 
 PDF_FILES = [
