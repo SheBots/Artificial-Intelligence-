@@ -13,3 +13,5 @@ data/
 .venv/
 
 shebots-rag-key.pem
+
+manual_data/

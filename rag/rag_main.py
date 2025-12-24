@@ -11,8 +11,10 @@ import os
 import json
 import re
 from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
+# Load .env next to this file to be robust to CWD
+load_dotenv(Path(__file__).with_name(".env"))
 
 import logging
 
@@ -24,16 +26,20 @@ from .embeddings import get_embedding_model
 app = FastAPI(title="Universal Hybrid RAG")
 
 # ----------------------------- ENV -----------------------------
-# Fix default paths to ./data instead of .data
-INDEX_PATH = os.getenv("INDEX_PATH", "./data/test/faiss_index")
-DOCSTORE_PATH = os.getenv("DOCSTORE_PATH", "./data/test/docstore.jsonl")
-START_URLS = os.getenv("START_URLS", "").split(";")
-ALLOWLIST = os.getenv("ALLOWLIST", "").split(";")
+# Stable defaults anchored to repo root, robust across CWDs
+PKG_DIR = Path(__file__).resolve().parent
+ROOT_DIR = PKG_DIR.parent
+DATA_DIR = Path(os.getenv("DATA_DIR", ROOT_DIR / "data" / "test"))
+
+INDEX_PATH = os.getenv("INDEX_PATH", str(DATA_DIR / "faiss_index"))
+DOCSTORE_PATH = os.getenv("DOCSTORE_PATH", str(DATA_DIR / "docstore.jsonl"))
+START_URLS = os.getenv("START_URLS", "").split(";") if os.getenv("START_URLS") else []
+ALLOWLIST = os.getenv("ALLOWLIST", "").split(";") if os.getenv("ALLOWLIST") else []
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
 
 TOP_K = int(os.getenv("TOP_K", "5"))
-MAX_CHUNKS = int(os.getenv("MAX_CHUNKS", "8"))
-SEMANTIC_CAND_MULTIPLIER = int(os.getenv("SEMANTIC_CAND_MULTIPLIER", "4"))
+MAX_CHUNKS = int(os.getenv("MAX_CHUNKS", "12"))
+SEMANTIC_CAND_MULTIPLIER = int(os.getenv("SEMANTIC_CAND_MULTIPLIER", "6"))
 
 logging.basicConfig(
     level=logging.INFO,
@@ -63,24 +69,40 @@ def tokenize(text: str):
     return re.findall(r"[0-9A-Za-z가-힣]+", text.lower())
 
 
-def keyword_rank(query: str, docs: list, max_results: int = 30):
+MAJOR_ALIASES = {
+    "platform_software": {"platform software", "플랫폼소프트웨어"},
+    "global_software": {"global software", "글솝", "glassop", "global sw"},
+    "data_science": {"data science", "데이터과학"},
+    "advanced_computing": {"advanced computing", "심화컴퓨터공학", "abeek"},
+}
+
+def detect_target_major(query: str) -> str | None:
+    q = (query or "").lower()
+    for key, aliases in MAJOR_ALIASES.items():
+        if any(a in q for a in aliases):
+            return key
+    return None
+
+def keyword_rank(query: str, docs: list, max_results: int = 50):
     """
-    Universal keyword relevance:
+    Enhanced keyword relevance for requirements & numeric facts:
     - token overlaps
-    - no domain-specific synonym injection
-    - scoring = occurrences in title * 2 + occurrences in text
+    - title boosts (2x)
+    - extra boosts for digits and requirement terms
     """
     q_tokens = tokenize(query)
-
     if not q_tokens:
         return []
 
-    scored_docs = []
+    numeric_terms = set([t for t in q_tokens if t.isdigit()])
+    req_terms = {"credit", "credits", "학점", "internship", "인턴", "요건", "requirements", "졸업", "필수"}
+    target_major = detect_target_major(query)
 
+    scored_docs = []
     for d in docs:
         text = (d.get("text") or d.get("content") or "").lower()
         title = (d.get("title") or "").lower()
-
+        url = (d.get("url") or "").lower()
         if not text and not title:
             continue
 
@@ -88,16 +110,33 @@ def keyword_rank(query: str, docs: list, max_results: int = 30):
         for t in q_tokens:
             if len(t) < 2:
                 continue
+            title_hits = title.count(t)
+            text_hits = text.count(t)
+            base = 2.0 * title_hits + 1.0 * text_hits
+            if t in numeric_terms:
+                base *= 1.6
+            if t in req_terms:
+                base *= 1.4
+            score += base
 
-            score += 2.0 * title.count(t)
-            score += 1.0 * text.count(t)
+        # Major-aware boosting/penalty based on title/url path
+        if target_major:
+            target_aliases = MAJOR_ALIASES.get(target_major, set())
+            # Found target major in title or url/path
+            if any(a in title or a in url for a in target_aliases):
+                score *= 1.6
+            else:
+                # Penalize obvious mismatches (aliases from other majors)
+                other_aliases = set().union(*(v for k, v in MAJOR_ALIASES.items() if k != target_major))
+                if any(a in title or a in url for a in other_aliases):
+                    score *= 0.7
 
         if score > 0:
             newd = dict(d)
             newd["keyword_score"] = float(score)
             scored_docs.append(newd)
 
-    scored_docs.sort(key=lambda x: x.get("keyword_score", 0), reverse=True)
+    scored_docs.sort(key=lambda x: x.get("keyword_score", 0.0), reverse=True)
     return scored_docs[:max_results]
 
 
@@ -137,9 +176,8 @@ def merge(semantic, keyword):
 
 def rerank(cands: list, k: int, max_chunks: int):
     """
-    Final universal fusion score:
-        final = 0.7 * semantic + 0.3 * keyword_norm
-    No boosts or domain conditions.
+    Fusion score tuned for numeric requirement queries:
+        final = 0.55 * semantic + 0.45 * keyword_norm
     """
     if not cands:
         return []
@@ -154,7 +192,7 @@ def rerank(cands: list, k: int, max_chunks: int):
         key = float(c.get("keyword_score", 0.0))
         key_norm = key / max_key
 
-        score = 0.7 * sem + 0.3 * key_norm
+        score = 0.55 * sem + 0.45 * key_norm
 
         newc = dict(c)
         newc["final_score"] = float(score)
@@ -162,8 +200,19 @@ def rerank(cands: list, k: int, max_chunks: int):
 
     final.sort(key=lambda x: x["final_score"], reverse=True)
 
-    limit = min(len(final), max_chunks, max(k, 1))
-    return final[:limit]
+    # Group by document (url) and keep best per doc to avoid one doc dominating
+    by_doc: dict[str, dict] = {}
+    for item in final:
+        doc_key = str(item.get("url"))
+        prev = by_doc.get(doc_key)
+        if (prev is None) or (item.get("final_score", 0.0) > prev.get("final_score", 0.0)):
+            by_doc[doc_key] = item
+
+    grouped = list(by_doc.values())
+    grouped.sort(key=lambda x: x.get("final_score", 0.0), reverse=True)
+
+    limit = min(len(grouped), max_chunks, max(k, 1))
+    return grouped[:limit]
 
 # ----------------------------- Health -----------------------------
 
